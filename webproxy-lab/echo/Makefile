@@ -1,21 +1,38 @@
-CC = gcc
-CFLAGS = -g -Wall -I..
-LDFLAGS = -lpthread
+# echo/Makefile  — echoserver & echoclient 빌드
+CC       := gcc
+CFLAGS   := -Wall -Wextra -g -O0 -I.. -MMD -MP
+LDFLAGS  :=
+RM       := rm -f
 
-all: echo_srv echo_cli
+# 객체 파일 목록
+SRV_OBJS := echo_srv.o echo.o ../csapp.o
+CLI_OBJS := echo_cli.o        ../csapp.o
 
-echo_srv: echo_srv.o ../csapp.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+# .d 의존성 파일들(현재 폴더 것만 포함)
+DEPS := $(SRV_OBJS:.o=.d) $(CLI_OBJS:.o=.d)
+DEPS := $(filter %.d,$(DEPS))
 
-echo_cli: echo_cli.o ../csapp.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+.PHONY: all clean
+all: echoserver echoclient
 
-%.o: %.c ../csapp.h
-	$(CC) $(CFLAGS) -c $<
+# 링크 단계
+echoserver: $(SRV_OBJS)
+	$(CC) $(SRV_OBJS) -o $@ $(LDFLAGS)
 
-# 루트에 csapp.o 없으면 자동으로 만들어줌
+echoclient: $(CLI_OBJS)
+	$(CC) $(CLI_OBJS) -o $@ $(LDFLAGS)
+
+# 공통 컴파일 규칙 (.c -> .o)
+# -MMD -MP 덕분에 각 .o 옆에 .d(의존성) 자동 생성
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# 상위 폴더의 csapp.o 규칙
 ../csapp.o: ../csapp.c ../csapp.h
-	$(CC) $(CFLAGS) -c ../csapp.c -o ../csapp.o
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o echo_srv echo_cli
+	$(RM) *.o *.d echoserver echoclient
+
+# 자동 의존성 포함 (없어도 에러 안 나게 -)
+-include $(DEPS)
