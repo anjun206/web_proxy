@@ -8,7 +8,6 @@ typedef struct {
     socklen_t addrlen;
 } client_arg_t;
 
-
 static void client_error(int fd, int status, const char *shortmsg, const char *longmsg) {
     char buf[MAXLINE], body[MAXBUF];
     snprintf(body, sizeof(body),
